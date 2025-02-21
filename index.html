@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>一年級算數遊戲</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; font-size: 24px; }
+        .question { margin: 10px; }
+        input { font-size: 20px; width: 60px; text-align: center; }
+        button { font-size: 20px; padding: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <h1>一年級算數遊戲</h1>
+    <p id="timer">剩餘時間: 10:00</p>
+    <div id="questions"></div>
+    <button onclick="submitAnswers()">交卷</button>
+    <p id="result"></p>
+    <button onclick="restartGame()">重新開始</button>
+
+    <script>
+        class MathGame {
+            constructor() {
+                this.questions = [];
+                this.score = 0;
+                this.generateQuestions();
+            }
+
+            generateQuestions() {
+                for (let i = 0; i < 10; i++) {
+                    let num1 = Math.floor(Math.random() * 100);
+                    let operator = Math.random() < 0.5 ? '+' : '-';
+                    let num2 = Math.floor(Math.random() * 100);
+                    if (operator === '-' && num1 < num2) {
+                        [num1, num2] = [num2, num1];
+                    }
+                    let answer = operator === '+' ? num1 + num2 : num1 - num2;
+                    this.questions.push({ num1, operator, num2, answer });
+                }
+            }
+
+            checkAnswers(userAnswers) {
+                this.score = 0;
+                return this.questions.map((q, index) => {
+                    const correct = userAnswers[index] == q.answer;
+                    if (correct) this.score += 10;
+                    return { ...q, userAnswer: userAnswers[index], correct };
+                });
+            }
+        }
+
+        let game = new MathGame();
+        let timeLeft = 600;
+        let timerInterval;
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    submitAnswers();
+                } else {
+                    timeLeft--;
+                    let minutes = Math.floor(timeLeft / 60);
+                    let seconds = timeLeft % 60;
+                    document.getElementById("timer").textContent = `剩餘時間: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                }
+            }, 1000);
+        }
+
+        function displayQuestions() {
+            const container = document.getElementById("questions");
+            container.innerHTML = "";
+            game.questions.forEach((q, index) => {
+                container.innerHTML += `<div class="question">
+                    ${q.num1} ${q.operator} ${q.num2} = 
+                    <input type="number" id="answer${index}" />
+                </div>`;
+            });
+            startTimer();
+        }
+
+        function submitAnswers() {
+            clearInterval(timerInterval);
+            let userAnswers = [];
+            game.questions.forEach((_, index) => {
+                userAnswers.push(document.getElementById(`answer${index}`).value);
+            });
+            let results = game.checkAnswers(userAnswers);
+            document.getElementById("result").innerHTML = 
+                `你的得分: ${game.score}/100 <br>` + 
+                results.map((q, i) => `${q.num1} ${q.operator} ${q.num2} = ${q.answer}, 你的答案: ${q.userAnswer} (${q.correct ? '✔' : '✘'})`).join("<br>");
+        }
+
+        function restartGame() {
+            clearInterval(timerInterval);
+            game = new MathGame();
+            timeLeft = 600;
+            displayQuestions();
+            document.getElementById("result").innerHTML = "";
+            document.getElementById("timer").textContent = "剩餘時間: 10:00";
+        }
+
+        displayQuestions();
+    </script>
+</body>
+</html>
