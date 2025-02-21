@@ -9,15 +9,19 @@
         .question { margin: 10px; }
         input { font-size: 20px; width: 60px; text-align: center; }
         button { font-size: 20px; padding: 10px; margin-top: 20px; }
+        .answer { font-size: 20px; margin-left: 10px; }
+        .correct { color: green; }
+        .incorrect { color: red; }
+        #restartButton { display: none; }
     </style>
 </head>
 <body>
     <h1>一年級算數遊戲</h1>
-    <p id="timer">剩餘時間: 10:00</p>
+    <p id="timer">剩餘時間: 600 秒</p>
     <div id="questions"></div>
     <button onclick="submitAnswers()">交卷</button>
     <p id="result"></p>
-    <button onclick="restartGame()">重新開始</button>
+    <button id="restartButton" onclick="restartGame()">重新開始</button>
 
     <script>
         class MathGame {
@@ -61,9 +65,7 @@
                     submitAnswers();
                 } else {
                     timeLeft--;
-                    let minutes = Math.floor(timeLeft / 60);
-                    let seconds = timeLeft % 60;
-                    document.getElementById("timer").textContent = `剩餘時間: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+                    document.getElementById("timer").textContent = `剩餘時間: ${timeLeft} 秒`;
                 }
             }, 1000);
         }
@@ -75,6 +77,7 @@
                 container.innerHTML += `<div class="question">
                     ${q.num1} ${q.operator} ${q.num2} = 
                     <input type="number" id="answer${index}" />
+                    <span class="answer" id="correctAnswer${index}" style="display:none;"></span>
                 </div>`;
             });
             startTimer();
@@ -84,12 +87,19 @@
             clearInterval(timerInterval);
             let userAnswers = [];
             game.questions.forEach((_, index) => {
-                userAnswers.push(document.getElementById(`answer${index}`).value);
+                let userAnswer = document.getElementById(`answer${index}`).value;
+                userAnswers.push(userAnswer);
             });
             let results = game.checkAnswers(userAnswers);
             document.getElementById("result").innerHTML = 
-                `你的得分: ${game.score}/100 <br>` + 
-                results.map((q, i) => `${q.num1} ${q.operator} ${q.num2} = ${q.answer}, 你的答案: ${q.userAnswer} (${q.correct ? '✔' : '✘'})`).join("<br>");
+                `你的得分: ${game.score}/100 <br>`;
+            results.forEach((q, index) => {
+                let answerElement = document.getElementById(`correctAnswer${index}`);
+                answerElement.style.display = "inline";
+                answerElement.textContent = `答案: ${q.answer}`;
+                answerElement.className = q.correct ? "answer correct" : "answer incorrect";
+            });
+            document.getElementById("restartButton").style.display = "inline";
         }
 
         function restartGame() {
@@ -98,7 +108,8 @@
             timeLeft = 600;
             displayQuestions();
             document.getElementById("result").innerHTML = "";
-            document.getElementById("timer").textContent = "剩餘時間: 10:00";
+            document.getElementById("timer").textContent = "剩餘時間: 600 秒";
+            document.getElementById("restartButton").style.display = "none";
         }
 
         displayQuestions();
